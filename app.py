@@ -36,8 +36,46 @@
 
 from flask import Flask, jsonify
 
-# Import data
-from Notebook.ipynb import *
+# Python SQL toolkit and Object Relational Mapper
+import sqlalchemy
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, inspect, func
+from sqlalchemy import distinct
+import pandas as pd
+
+import matplotlib
+from matplotlib import style
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# Select only the date and prcp values.
+from datetime import datetime
+from dateutil. relativedelta import relativedelta
+import numpy as np
+
+
+# Create engine using the database file
+engine = create_engine(f"sqlite:////Users/swa/Documents/UC_Irvine/Homework/10-Advanced-Data-Storage-and-Retrieval/Instructions/Resources/hawaii.sqlite") 
+conn = engine.connect()
+
+# Declare a Base using `automap_base()`
+Base = automap_base()
+
+# Use the Base class to reflect the database tables
+Base.prepare(engine, reflect=True)
+
+# Print all of the classes mapped to the Base
+Base.classes.keys()
+
+# Assign the classes to variables called Station and Measurement
+Station = Base.classes.station
+Measurement = Base.classes.measurement
+
+# Create a session
+session = Session(engine)
+
+
 
 app = Flask(__name__)
 
@@ -85,7 +123,7 @@ app = Flask(__name__)
             filter(Measurement.date >= previous_year).\
             group_by(Measurement.station).\
             order_by(func.count(Measurement.station).desc()).all()
-            
+
         top_station = stations[0][0]
 
         top_measurements = session.query(Measurement).\

@@ -72,24 +72,25 @@ Base.classes.keys()
 Station = Base.classes.station
 Measurement = Base.classes.measurement
 
-# Create a session
-session = Session(engine)
-
 app = Flask(__name__)
 
 @app.route("/")
 def homepage():
     return (
-        f"/api/v1.0/precipitation"
-        f"/api/v1.0/stations"
-        f"/api/v1.0/tobs"
-        f"/api/v1.0/<start>"
+        f"/api/v1.0/precipitation<br>"
+        f"/api/v1.0/stations<br>"
+        f"/api/v1.0/tobs<br>"
+        f"/api/v1.0/start<br>"
+        f"/api/v1.0/start/end"
     )
 
 @app.route("/api/v1.0/precipitation")
 #     * Convert the query results to a dictionary using `date` as the key and `prcp` as the value.
 #     * Return the JSON representation of your dictionary.
 def precipitation():
+    # Create a session
+    session = Session(engine)
+
     measurements = session.query(Measurement)
     most_recent_date = measurements[-1].date
     previous_year = datetime.fromisoformat(most_recent_date) - relativedelta(years=1)
@@ -98,6 +99,9 @@ def precipitation():
         filter(Measurement.date >= previous_year).\
         group_by(Measurement.date).\
         order_by(Measurement.date).all()
+
+    session.close()
+
     df = pd.DataFrame(columns = ["Date", "PRCP"])
     for measurement in measurements:
         df = df.append({'Date' : measurement.date, 'PRCP' : measurement.prcp}, ignore_index=True)
@@ -110,13 +114,22 @@ def precipitation():
 
 @app.route("/api/v1.0/stations")
 def stations():
+    # Create a session
+    session = Session(engine)
+
     stations = session.query(Measurement.station, func.count(Measurement.station)).\
             group_by(Measurement.station).\
             order_by(func.count(Measurement.station).desc()).all()
-    return stations
+
+    session.close()
+
+    return jsonify(stations)
 
 @app.route("/api/v1.0/tobs")
 def tobs():
+    # Create a session
+    session = Session(engine)
+
     stations = session.query(Measurement.station, func.count(Measurement.station)).\
         filter(Measurement.date >= previous_year).\
         group_by(Measurement.station).\
@@ -129,11 +142,16 @@ def tobs():
         filter(Measurement.station == top_station).\
         group_by(Measurement.date).\
         order_by(Measurement.date).all()
-        
-    return top_measurements
+
+    session.close()
+
+    return jsonify(top_measurements)
 
 @app.route("/api/v1.0/<start>")
 def calculate_start(start_date):
+    # Create a session
+    session = Session(engine)
+
     measurements = session.query(Measurement).\
         filter(Measurement.date >= start_date).\
         group_by(Measurement.date).\
@@ -156,10 +174,16 @@ def calculate_start(start_date):
         filter(Measurement.station == top_station).all()
     avg_temp_value = average_temp[0][1]
     print("Average Temperature is " + str(avg_temp_value))
+
+    session.close()
+
     return jsonify(max_temp_value, min_temp_value, avg_temp_value)
 
 @app.route("/api/v1.0/<start>/<end>")
 def calculate_start_end(start_date, end_date):
+    # Create a session
+    session = Session(engine)
+
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
         filter(Measurement.date >= start_date).\
         filter(Measurement.date <= end_date).all()
@@ -177,4 +201,7 @@ def calculate_start_end(start_date, end_date):
         filter(Measurement.date <= end_date).all()
     avg_temp_value = average_temp[0][1]
     print("Average Temperature is " + str(avg_temp_value))
+
+    session.close()
+
     return jsonify(max_temp_value, min_temp_value, avg_temp_value)

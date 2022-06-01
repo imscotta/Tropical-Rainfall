@@ -1,39 +1,5 @@
 # <!-- ### Part 2: Design Your Climate App
 
-# Now that you have completed your initial analysis, you’ll design a Flask API based on the queries that you have just developed.
-
-# Use Flask to create your routes, as follows:
-
-# * `/`
-
-#     * Homepage.
-
-#     * List all available routes.
-
-# * `/api/v1.0/precipitation`
-
-#     * Convert the query results to a dictionary using `date` as the key and `prcp` as the value.
-
-#     * Return the JSON representation of your dictionary.
-
-# * `/api/v1.0/stations`
-
-#     * Return a JSON list of stations from the dataset.
-
-# * `/api/v1.0/tobs`
-
-#     * Query the dates and temperature observations of the most active station for the previous year of data.
-
-#     * Return a JSON list of temperature observations (TOBS) for the previous year.
-
-# * `/api/v1.0/<start>` and `/api/v1.0/<start>/<end>`
-
-#     * Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a given start or start-end range.
-
-#     * When given the start only, calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than or equal to the start date.
-
-#     * When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates from the start date through the end date (inclusive). -->
-
 from flask import Flask, jsonify
 
 # Python SQL toolkit and Object Relational Mapper
@@ -54,7 +20,6 @@ from datetime import datetime
 from dateutil. relativedelta import relativedelta
 import numpy as np
 
-
 # Create engine using the database file
 engine = create_engine(f"sqlite:////Users/swa/Documents/UC_Irvine/Homework/10-Advanced-Data-Storage-and-Retrieval/Instructions/Resources/hawaii.sqlite") 
 conn = engine.connect()
@@ -74,6 +39,10 @@ Measurement = Base.classes.measurement
 
 app = Flask(__name__)
 
+# * `/`
+#     * Homepage.
+#     * List all available routes.
+
 @app.route("/")
 def homepage():
     return (
@@ -84,9 +53,11 @@ def homepage():
         f"/api/v1.0/start/end"
     )
 
-@app.route("/api/v1.0/precipitation")
+# * `/api/v1.0/precipitation`
 #     * Convert the query results to a dictionary using `date` as the key and `prcp` as the value.
 #     * Return the JSON representation of your dictionary.
+
+@app.route("/api/v1.0/precipitation")
 def precipitation():
     # Create a session
     session = Session(engine)
@@ -111,6 +82,8 @@ def precipitation():
         results_pairs.append({a: b})
     return jsonify(results_pairs)
 
+# * `/api/v1.0/stations`
+#     * Return a JSON list of stations from the dataset.
 
 @app.route("/api/v1.0/stations")
 def stations():
@@ -124,6 +97,10 @@ def stations():
     session.close()
 
     return jsonify(stations)
+
+# * `/api/v1.0/tobs`
+#     * Query the dates and temperature observations of the most active station for the previous year of data.
+#     * Return a JSON list of temperature observations (TOBS) for the previous year.
 
 @app.route("/api/v1.0/tobs")
 def tobs():
@@ -146,6 +123,11 @@ def tobs():
     session.close()
 
     return jsonify(top_measurements)
+
+# * `/api/v1.0/<start>`
+#     * Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a given start or start-end range.\
+#     * When given the start only, calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than or equal to the start date.
+#     * When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates from the start date through the end date (inclusive).
 
 @app.route("/api/v1.0/<start>")
 def calculate_start(start_date):
@@ -178,6 +160,11 @@ def calculate_start(start_date):
     session.close()
 
     return jsonify(max_temp_value, min_temp_value, avg_temp_value)
+
+# * `/api/v1.0/<start>/<end>`
+#     * Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a given start or start-end range.\
+#     * When given the start only, calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than or equal to the start date.
+#     * When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates from the start date through the end date (inclusive).
 
 @app.route("/api/v1.0/<start>/<end>")
 def calculate_start_end(start_date, end_date):

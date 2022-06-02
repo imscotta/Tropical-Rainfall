@@ -78,6 +78,8 @@ def precipitation():
         df = df.append({'Date' : measurement.date, 'PRCP' : measurement.prcp}, ignore_index=True)
 
     results_pairs = {}
+    x = np.array(df["Date"].values)
+    y = np.array(df["PRCP"].values)
     for a, b in x, y:
         results_pairs.append({a: b})
 
@@ -125,15 +127,24 @@ def tobs():
 
     top_measurements = session.query(Measurement).\
         filter(Measurement.date >= previous_year).\
-        filter(Measurement.station == top_station).\
         group_by(Measurement.date).\
         order_by(Measurement.date).all()
 
     session.close()
 
-    top_measurements = list(np.ravel(top_measurements))
+    df = pd.DataFrame(columns = ["Date", "PRCP"])
+    for measurement in top_measurements:
+        df = df.append({'Date' : measurement.date, 'PRCP' : measurement.prcp}, ignore_index=True)
 
-    return jsonify(top_measurements)
+    results_pairs = {}
+    x = np.array(df["Date"].values)
+    y = np.array(df["PRCP"].values)
+    for a, b in x, y:
+        results_pairs.append({a: b})
+
+    # top_measurements = list(np.ravel(top_measurements))
+
+    return jsonify(results_pairs)
 
 # * `/api/v1.0/<start>`
 #     * Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a given start or start-end range.\

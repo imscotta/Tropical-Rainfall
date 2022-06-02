@@ -66,22 +66,14 @@ def precipitation():
     most_recent_date = measurements[-1].date
     previous_year = datetime.fromisoformat(most_recent_date) - relativedelta(years=1)
                                         
-    measurements = session.query(Measurement).\
+    measurements = session.query(Measurement.date, Measurement.prcp).\
         filter(Measurement.date >= previous_year).\
         group_by(Measurement.date).\
         order_by(Measurement.date).all()
 
     session.close()
 
-    df = pd.DataFrame(columns = ["Date", "PRCP"])
-    for measurement in measurements:
-        df = df.append({'Date' : measurement.date, 'PRCP' : measurement.prcp}, ignore_index=True)
-
-    results_pairs = {}
-    x = np.array(df["Date"].values)
-    y = np.array(df["PRCP"].values)
-    for a, b in x, y:
-        results_pairs.append({a: b})
+    results_pairs = {date: prcp for date, prcp in measurements}
 
     return jsonify(results_pairs)
 
@@ -134,32 +126,23 @@ def tobs():
 
     df = pd.DataFrame(columns = ["Date", "PRCP"])
     for measurement in top_measurements:
-        df = df.append({'Date' : measurement.date, 'PRCP' : measurement.prcp}, ignore_index=True)
+        df = df.append({'TOBS' : measurement.tobs}, ignore_index=True)
 
-    results_pairs = {}
-    x = np.array(df["Date"].values)
-    y = np.array(df["PRCP"].values)
-    for a, b in x, y:
-        results_pairs.append({a: b})
+    x = np.array(df["TOBS"].values)
 
-    # top_measurements = list(np.ravel(top_measurements))
+    top_measurements = list(np.ravel(x))
 
-    return jsonify(results_pairs)
+    return jsonify(top_measurements)
 
 # * `/api/v1.0/<start>`
 #     * Return a JSON list of the minimum temperature, the average temperature, and the maximum temperature for a given start or start-end range.\
 #     * When given the start only, calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than or equal to the start date.
 #     * When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates from the start date through the end date (inclusive).
 
-@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/")
 def calculate_start(start_date):
     # Create a session
     session = Session(engine)
-
-    measurements = session.query(Measurement).\
-        filter(Measurement.date >= start_date).\
-        group_by(Measurement.date).\
-        order_by(Measurement.date).all()
 
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
         filter(Measurement.date >= start_date).all()

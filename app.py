@@ -80,6 +80,7 @@ def precipitation():
     results_pairs = {}
     for a, b in x, y:
         results_pairs.append({a: b})
+
     return jsonify(results_pairs)
 
 # * `/api/v1.0/stations`
@@ -95,6 +96,8 @@ def stations():
             order_by(func.count(Measurement.station).desc()).all()
 
     session.close()
+    
+    stations = list(np.ravel(stations))
 
     return jsonify(stations)
 
@@ -106,6 +109,12 @@ def stations():
 def tobs():
     # Create a session
     session = Session(engine)
+
+    # Find the most recent date in the dataset.
+    # Using this date, retrieve the previous 12 months of precipitation data by querying the 12 previous months of data. Note: Do not pass in the date as a variable to your query.
+    measurements = session.query(Measurement)
+    most_recent_date = measurements[-1].date
+    previous_year = datetime.fromisoformat(most_recent_date) - relativedelta(years=1)
 
     stations = session.query(Measurement.station, func.count(Measurement.station)).\
         filter(Measurement.date >= previous_year).\
@@ -121,6 +130,8 @@ def tobs():
         order_by(Measurement.date).all()
 
     session.close()
+
+    top_measurements = list(np.ravel(top_measurements))
 
     return jsonify(top_measurements)
 
@@ -140,20 +151,17 @@ def calculate_start(start_date):
         order_by(Measurement.date).all()
 
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).\
-        filter(Measurement.station == top_station).all()
+        filter(Measurement.date >= start_date).all()
     max_temp_value = max_temp[0][1]
     print("Max Temperature is " + str(max_temp_value))
 
     min_temp = session.query(Measurement.station, func.min(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).\
-        filter(Measurement.station == top_station).all()
+        filter(Measurement.date >= start_date).all()
     min_temp_value = min_temp[0][1]
     print("Min Temperature is " + str(min_temp_value))
 
     average_temp = session.query(Measurement.station, func.avg(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).\
-        filter(Measurement.station == top_station).all()
+        filter(Measurement.date >= start_date).all()
     avg_temp_value = average_temp[0][1]
     print("Average Temperature is " + str(avg_temp_value))
 
@@ -192,3 +200,6 @@ def calculate_start_end(start_date, end_date):
     session.close()
 
     return jsonify(max_temp_value, min_temp_value, avg_temp_value)
+
+if __name__ == "__main__":
+    app.run(debug=True)

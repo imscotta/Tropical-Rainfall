@@ -139,25 +139,22 @@ def tobs():
 #     * When given the start only, calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than or equal to the start date.
 #     * When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates from the start date through the end date (inclusive).
 
-@app.route("/api/v1.0/")
-def calculate_start(start_date):
+@app.route("/api/v1.0/<start>")
+def calculate_start(start):
     # Create a session
     session = Session(engine)
 
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).all()
+        filter(Measurement.date >= start).all()
     max_temp_value = max_temp[0][1]
-    print("Max Temperature is " + str(max_temp_value))
 
     min_temp = session.query(Measurement.station, func.min(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).all()
+        filter(Measurement.date >= start).all()
     min_temp_value = min_temp[0][1]
-    print("Min Temperature is " + str(min_temp_value))
 
     average_temp = session.query(Measurement.station, func.avg(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).all()
+        filter(Measurement.date >= start).all()
     avg_temp_value = average_temp[0][1]
-    print("Average Temperature is " + str(avg_temp_value))
 
     session.close()
 
@@ -169,27 +166,24 @@ def calculate_start(start_date):
 #     * When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates from the start date through the end date (inclusive).
 
 @app.route("/api/v1.0/<start>/<end>")
-def calculate_start_end(start_date, end_date):
+def calculate_start_end(start, end):
     # Create a session
     session = Session(engine)
 
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).\
-        filter(Measurement.date <= end_date).all()
+        filter(Measurement.date >= start).\
+        filter(Measurement.date <= end).all()
     max_temp_value = max_temp[0][1]
-    print("Max Temperature is " + str(max_temp_value))
 
     min_temp = session.query(Measurement.station, func.min(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).\
-        filter(Measurement.date <= end_date).all()
+        filter(Measurement.date >= start).\
+        filter(Measurement.date <= end).all()
     min_temp_value = min_temp[0][1]
-    print("Min Temperature is " + str(min_temp_value))
 
     average_temp = session.query(Measurement.station, func.avg(Measurement.prcp)).\
-        filter(Measurement.date >= start_date).\
-        filter(Measurement.date <= end_date).all()
+        filter(Measurement.date >= start).\
+        filter(Measurement.date <= end).all()
     avg_temp_value = average_temp[0][1]
-    print("Average Temperature is " + str(avg_temp_value))
 
     session.close()
 

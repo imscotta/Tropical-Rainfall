@@ -62,10 +62,12 @@ def precipitation():
     # Create a session
     session = Session(engine)
 
+    # Find most recent date, and date from year before
     measurements = session.query(Measurement)
     most_recent_date = measurements[-1].date
     previous_year = datetime.fromisoformat(most_recent_date) - relativedelta(years=1)
-                                        
+
+    # Grab measurements
     measurements = session.query(Measurement.date, Measurement.prcp).\
         filter(Measurement.date >= previous_year).\
         group_by(Measurement.date).\
@@ -73,6 +75,7 @@ def precipitation():
 
     session.close()
 
+    # Format data
     results_pairs = {date: prcp for date, prcp in measurements}
 
     return jsonify(results_pairs)
@@ -85,12 +88,14 @@ def stations():
     # Create a session
     session = Session(engine)
 
+    # Grab list of stations
     stations = session.query(Measurement.station, func.count(Measurement.station)).\
             group_by(Measurement.station).\
             order_by(func.count(Measurement.station).desc()).all()
 
     session.close()
     
+    # Convert station objects to a list
     stations = list(np.ravel(stations))
 
     return jsonify(stations)
@@ -105,18 +110,11 @@ def tobs():
     session = Session(engine)
 
     # Find the most recent date in the dataset.
-    # Using this date, retrieve the previous 12 months of precipitation data by querying the 12 previous months of data. Note: Do not pass in the date as a variable to your query.
     measurements = session.query(Measurement)
     most_recent_date = measurements[-1].date
     previous_year = datetime.fromisoformat(most_recent_date) - relativedelta(years=1)
 
-    stations = session.query(Measurement.station, func.count(Measurement.station)).\
-        filter(Measurement.date >= previous_year).\
-        group_by(Measurement.station).\
-        order_by(func.count(Measurement.station).desc()).all()
-
-    top_station = stations[0][0]
-
+    # Using this date, retrieve the previous 12 months of precipitation data by querying the 12 previous months of data. Note: Do not pass in the date as a variable to your query.
     top_measurements = session.query(Measurement).\
         filter(Measurement.date >= previous_year).\
         group_by(Measurement.date).\
@@ -124,6 +122,7 @@ def tobs():
 
     session.close()
 
+    # Select Date and PRCP values
     df = pd.DataFrame(columns = ["Date", "PRCP"])
     for measurement in top_measurements:
         df = df.append({'TOBS' : measurement.tobs}, ignore_index=True)
@@ -144,14 +143,17 @@ def calculate_start(start):
     # Create a session
     session = Session(engine)
 
+    # Calculate max temperature
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
         filter(Measurement.date >= start).all()
     max_temp_value = max_temp[0][1]
 
+    # Calculate min temperature
     min_temp = session.query(Measurement.station, func.min(Measurement.prcp)).\
         filter(Measurement.date >= start).all()
     min_temp_value = min_temp[0][1]
 
+    # Calculate avg temperature
     average_temp = session.query(Measurement.station, func.avg(Measurement.prcp)).\
         filter(Measurement.date >= start).all()
     avg_temp_value = average_temp[0][1]
@@ -170,16 +172,19 @@ def calculate_start_end(start, end):
     # Create a session
     session = Session(engine)
 
+    # Calculate max temperature
     max_temp = session.query(Measurement.station, func.max(Measurement.prcp)).\
         filter(Measurement.date >= start).\
         filter(Measurement.date <= end).all()
     max_temp_value = max_temp[0][1]
 
+    # Calculate min temperature
     min_temp = session.query(Measurement.station, func.min(Measurement.prcp)).\
         filter(Measurement.date >= start).\
         filter(Measurement.date <= end).all()
     min_temp_value = min_temp[0][1]
 
+    # Calculate avg temperature
     average_temp = session.query(Measurement.station, func.avg(Measurement.prcp)).\
         filter(Measurement.date >= start).\
         filter(Measurement.date <= end).all()

@@ -8,7 +8,6 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, inspect, func
 from sqlalchemy import distinct
-import pandas as pd
 
 import matplotlib
 from matplotlib import style
